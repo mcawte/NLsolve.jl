@@ -7,7 +7,7 @@ function wdot{T}(wx::AbstractVector{T}, x::AbstractVector{T},
     return out
 end
 
-wnorm{T}(w::AbstractVector{T}, x::AbstractVector{T}) = sqrt(wdot(w, x, w, x))
+wnorm{T}(w::AbstractVector{T}, x::AbstractVector{T}) = sqrt(abs(wdot(w, x, w, x)))
 
 function assess_convergence(x::AbstractArray,
                             x_previous::AbstractArray,

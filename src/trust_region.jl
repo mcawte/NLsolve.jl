@@ -79,15 +79,15 @@ function dogleg!{T}(p::AbstractVector{T}, r::AbstractVector{T}, d::AbstractVecto
     end
 end
 
-function trust_region_{T}(df::AbstractDifferentiableMultivariateFunction,
+function trust_region_{T,S}(df::AbstractDifferentiableMultivariateFunction,
                           initial_x::AbstractArray{T},
-                          xtol::T,
-                          ftol::T,
+                          xtol::S,
+                          ftol::S,
                           iterations::Integer,
                           store_trace::Bool,
                           show_trace::Bool,
                           extended_trace::Bool,
-                          factor::T,
+                          factor::S,
                           autoscale::Bool)
 
     x = vec(copy(initial_x))     # Current point
@@ -112,8 +112,8 @@ function trust_region_{T}(df::AbstractDifferentiableMultivariateFunction,
     it = 0
     x_converged, f_converged, converged = assess_convergence(x, xold, r, xtol, ftol)
 
-    delta = convert(T, NaN)
-    rho = convert(T, NaN)
+    delta = convert(S, NaN)
+    rho = convert(S, NaN)
 
     tr = SolverTrace()
     tracing = store_trace || show_trace || extended_trace
@@ -122,20 +122,20 @@ function trust_region_{T}(df::AbstractDifferentiableMultivariateFunction,
     if autoscale
         for j = 1:nn
             d[j] = norm(view(J, :, j))
-            if d[j] == zero(T)
-                d[j] = one(T)
+            if d[j] == zero(S)
+                d[j] = one(S)
             end
         end
     else
-        fill!(d, one(T))
+        fill!(d, one(S))
     end
 
-    delta = factor * wnorm(d, x)
-    if delta == zero(T)
+    delta = factor * abs(wnorm(d, x))
+    if delta == zero(S)
         delta = factor
     end
 
-    eta = convert(T, 1e-4)
+    eta = convert(S, 1e-4)
 
     while !converged && it < iterations
         it += 1
@@ -153,6 +153,7 @@ function trust_region_{T}(df::AbstractDifferentiableMultivariateFunction,
         r_predict .+= r
         rho = (sum(abs2,r) - sum(abs2,r_new)) / (sum(abs2,r) - sum(abs2,r_predict))
 
+
         if rho > eta
             # Successful iteration
             r .= r_new
@@ -162,7 +163,7 @@ function trust_region_{T}(df::AbstractDifferentiableMultivariateFunction,
             # Update scaling vector
             if autoscale
                 for j = 1:nn
-                    d[j] = max(convert(T, 0.1) * d[j], norm(view(J, :, j)))
+                    d[j] = max(convert(S, 0.1) * abs(d[j]), norm(view(J, :, j)))
                 end
             end
 
@@ -194,15 +195,15 @@ function trust_region_{T}(df::AbstractDifferentiableMultivariateFunction,
                          f_calls, g_calls)
 end
 
-function trust_region{T}(df::AbstractDifferentiableMultivariateFunction,
+function trust_region{T,S}(df::AbstractDifferentiableMultivariateFunction,
                          initial_x::AbstractArray{T},
-                         xtol::Real,
-                         ftol::Real,
+                         xtol::S,
+                         ftol::S,
                          iterations::Integer,
                          store_trace::Bool,
                          show_trace::Bool,
                          extended_trace::Bool,
-                         factor::Real,
+                         factor::S,
                          autoscale::Bool)
-    trust_region_(df, initial_x, convert(T,xtol), convert(T,ftol), iterations, store_trace, show_trace, extended_trace, convert(T,factor), autoscale)
+    trust_region_(df, initial_x, convert(S,xtol), convert(S,ftol), iterations, store_trace, show_trace, extended_trace, convert(S,factor), autoscale)
 end
